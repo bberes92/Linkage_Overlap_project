@@ -4,7 +4,43 @@ import pandas as pd
 import openpyxl 
 import finding_genes_module as fg
 import os
-import threading
+from threading import Thread
+
+
+class GenerateTable(Thread):
+    def __init__(self, gene_list, overlap, linkage, output_file):
+        super().__init__()
+        self.gene_list = gene_list
+        self.overlap = overlap
+        self.linkage = linkage
+        self.output_file_path = output_file
+
+    def run(self):
+        db_location = os.path.join(os.getcwd(),"SGD.csv")
+        SGD_database = pd.read_csv(db_location, index_col=0)
+        Final_data_table = pd.DataFrame()  
+        overlapping_genes = pd.DataFrame()  
+        linkage_genes = pd.DataFrame()  
+            
+        for gene in self.gene_list:   
+            if gene in SGD_database[['Standard Name']].values:
+                column = 'Standard Name'
+            elif gene in SGD_database[['Systematic Name']].values:
+                column = 'Systematic Name'
+            else:
+                print(f"This gene is not present in SGD database: {gene}")
+            if len(column) != 0:
+                gene_start, gene_end, gene_chromosome = fg.info_genes(SGD_database, gene, column)
+                if self.overlap == 1:
+                    overlapping_genes = fg.finding_overlapping_genes(SGD_database, gene,gene_start,gene_end,gene_chromosome)
+                if self.linkage == 1:
+                    linkage_genes = fg.list_of_nearest_genes(SGD_database, gene,gene_start,gene_end,gene_chromosome)
+                All_temp = [overlapping_genes, linkage_genes]
+                All_data = pd.concat(All_temp).drop_duplicates(subset=['Systematic Name'])
+                Final_data_table_temp = [Final_data_table, All_data]
+                Final_data_table = pd.concat(Final_data_table_temp)
+
+        Final_data_table.to_csv(self.output_file_path, index=False)
 
 
 class App(Tk):
@@ -50,7 +86,7 @@ class App(Tk):
         self.output_btn= Button(self, text= "Output location", command= self.path_file)
         self.output_file_name_label = Label(self, text="Output file name", font = ("Calibri",12))
         self.file_name = Entry(self, width = 60, state="normal", textvariable=self.output_file_name)
-        self.run_btn = Button(self, width = 10, height = 2, text= "Run", command= self.new_thread)
+        self.run_btn = Button(self, width = 10, height = 2, text= "Run", command= self.generate_table)
         self.progress_bar = ttk.Progressbar(self, orient='horizontal' ,mode='indeterminate')
         
 
@@ -131,23 +167,22 @@ class App(Tk):
         self.overlap_var.set(0)
         self.output_file_path.set("")
         self.output_file_name.set("")
-        
 
-    def new_thread(self):
-        self.run_btn.config(state="disabled")
-        thread = threading.Thread(target=self.generate_table)
-        thread.start()
-        
+    def monitor(self, thread):
+        if thread.is_alive():
+            # check the thread every 100ms
+            self.after(100, lambda: self.monitor(thread))
+        else:
+            self.progress_bar.stop()
+            self.progress_bar.place_forget()
+            self.clear()
+            self.popupmsg()
+
     def generate_table(self):  
         
         self.progress_bar.place(x=390, y=670)
         self.progress_bar.start()
         
-        db_location = os.path.join(os.getcwd(),"SGD.csv")
-        SGD_database = pd.read_csv(db_location, index_col=0)
-        Final_data_table = pd.DataFrame()  
-        overlapping_genes = pd.DataFrame()  
-        linkage_genes = pd.DataFrame()  
         if self.radio_btn_val.get() == 'text':
             text_input = self.text_area.get('1.0',END).upper()
             text_input_temp = ''.join(text_input.splitlines())
@@ -155,41 +190,13 @@ class App(Tk):
             
         elif self.radio_btn_val.get() == 'file':
             gene_list = self.get_genes_from_file(self.input_file_path.get())
-            
-        for gene in gene_list:   
-            if gene in SGD_database[['Standard Name']].values:
-                column = 'Standard Name'
-            elif gene in SGD_database[['Systematic Name']].values:
-                column = 'Systematic Name'
-            else:
-                print(f"This gene is not present in SGD database: {gene}")
-            if len(column) != 0:
-                gene_start, gene_end, gene_chromosome = fg.info_genes(SGD_database, gene, column)
-                if self.overlap_var.get() == 1:
-                    overlapping_genes = fg.finding_overlapping_genes(SGD_database, gene,gene_start,gene_end,gene_chromosome)
-                if self.link_var.get() == 1:
-                    linkage_genes = fg.list_of_nearest_genes(SGD_database, gene,gene_start,gene_end,gene_chromosome)
-                All_temp = [overlapping_genes, linkage_genes]
-                All_data = pd.concat(All_temp).drop_duplicates(subset=['Systematic Name'])
-                Final_data_table_temp = [Final_data_table, All_data]
-                Final_data_table = pd.concat(Final_data_table_temp)
-
-        output_file = os.path.join(self.output_file_path.get(), f"{self.output_file_name.get()}.csv")
-        Final_data_table.to_csv(output_file, index=False)
-
-        self.progress_bar.stop()
-        self.progress_bar.place_forget()
-        self.popupmsg()
-        self.clear()
         
+        output_file = os.path.join(self.output_file_path.get(), f"{self.output_file_name.get()}.csv")
 
-
-
+        generate_table_thread = GenerateTable(gene_list, self.overlap_var.get(), self.link_var.get(), output_file)
+        generate_table_thread.start()
+        self.monitor(generate_table_thread)
 
 if __name__=="__main__":
     app=App()
     app.mainloop()
-    
-    
-
-
