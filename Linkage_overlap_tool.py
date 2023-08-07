@@ -143,7 +143,7 @@ class App(Tk):
         self.progress_bar.place(x=390, y=670)
         self.progress_bar.start()
         
-        db_location = f"{os.getcwd()}\SGD.csv"
+        db_location = os.path.join(os.getcwd(),"SGD.csv")
         SGD_database = pd.read_csv(db_location, index_col=0)
         Final_data_table = pd.DataFrame()  
         overlapping_genes = pd.DataFrame()  
@@ -173,7 +173,8 @@ class App(Tk):
                 All_data = pd.concat(All_temp).drop_duplicates(subset=['Systematic Name'])
                 Final_data_table_temp = [Final_data_table, All_data]
                 Final_data_table = pd.concat(Final_data_table_temp)
-        output_file = f"{self.output_file_path.get()}\{self.output_file_name.get()}.csv"
+
+        output_file = os.path.join(self.output_file_path.get(), f"{self.output_file_name.get()}.csv")
         Final_data_table.to_csv(output_file, index=False)
 
         self.progress_bar.stop()
