@@ -1,5 +1,5 @@
 from tkinter import *
-from tkinter import ttk,scrolledtext,filedialog
+from tkinter import ttk,scrolledtext,filedialog, messagebox
 import pandas as pd
 import openpyxl 
 import finding_genes_module as fg
@@ -41,7 +41,6 @@ class GenerateTable(Thread):
                 Final_data_table = pd.concat(Final_data_table_temp)
 
         Final_data_table.to_csv(self.output_file_path, index=False)
-
 
 class App(Tk):
     def __init__(self):
@@ -141,21 +140,7 @@ class App(Tk):
         gene_list_df = pd.read_excel(input_file_path)
         gene_list = gene_list_df['Gene'].str.upper().tolist()
         return gene_list
-        
-    def popupmsg(self):
-        popup = Tk()
-        popup.title("Progress")
-        width = 250
-        height = 100
-        self.x_offset = (self.screen_width/2) - (width/2)
-        self.y_offset = (self.screen_heigth/2) - (height/2)
-        popup.geometry("%dx%d+%d+%d" % (width, height, self.x_offset, self.y_offset))
-        msg = Label(popup, text="DONE!" , font = ("Calibri",15))
-        msg.pack()
-        ok_btn = Button(popup, text="Ok",width = 10, height = 2, font = ("Calibri",13), command=popup.destroy)
-        ok_btn.pack()
-        popup.mainloop()
-        
+ 
     def clear(self):
         self.run_btn.config(state="normal")
         self.radio_btn_val.set("file")
@@ -175,8 +160,8 @@ class App(Tk):
         else:
             self.progress_bar.stop()
             self.progress_bar.place_forget()
+            messagebox.showinfo(title="Progress", message="Done! File has been saved!")
             self.clear()
-            self.popupmsg()
 
     def generate_table(self):  
         
