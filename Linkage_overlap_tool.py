@@ -48,7 +48,8 @@ class App(Tk):
 
         self.title("Linkage & Overlap tool")
         self.width = 800
-        self.height = 800
+        self.height = 650
+        self.resizable(False, False)
         self.screen_width = self.winfo_screenwidth()
         self.screen_heigth = self.winfo_screenheight()
 
@@ -59,15 +60,24 @@ class App(Tk):
         self.base_frame = Frame(self)
         self.base_frame.pack()
 
+        self.create_head_frame()
         self.create_input_frame()
         self.create_search_method_frame()
         self.create_output_frame()
         self.create_footer_frame()
 
+    def create_head_frame(self):
+
+        self.head_frame = Frame(self.base_frame)
+        self.head_frame.grid(row=0, column=0, padx=10, pady=10)
+
+        self.title = Label(self.head_frame, text="Linkage & Overlap Tool")
+        self.title.grid(row=0, column=0)
+
     def create_input_frame(self):
 
         self.input_type_frame = LabelFrame(self.base_frame, text="Input")
-        self.input_type_frame.grid(row=0, column=0, padx=10, pady=10)
+        self.input_type_frame.grid(row=1, column=0, padx=10, pady=10)
 
         self.input_type_rb_val = StringVar(value = "file")
         self.input_file_path = StringVar()
@@ -89,7 +99,7 @@ class App(Tk):
     def create_search_method_frame(self):
 
         self.search_method_frame = LabelFrame(self.base_frame, text="Search Method")
-        self.search_method_frame.grid(row=1, column=0, padx=10, pady=10)
+        self.search_method_frame.grid(row=2, column=0, padx=10, pady=10)
 
         self.link_var = IntVar()
         self.overlap_var = IntVar()
@@ -103,7 +113,7 @@ class App(Tk):
     def create_output_frame(self):    
 
         self.file_saving_frame = LabelFrame(self.base_frame, text="Output")
-        self.file_saving_frame.grid(row=2, column=0, padx=10, pady=10)
+        self.file_saving_frame.grid(row=3, column=0, padx=10, pady=10)
 
         self.output_file_name = StringVar()
         self.output_file_path = StringVar()
@@ -114,21 +124,21 @@ class App(Tk):
         self.output_file_name_label = Label(self.file_saving_frame, text="Output file name", font = ("Calibri",12))
         self.file_name = Entry(self.file_saving_frame, width = 60, state="normal", textvariable=self.output_file_name)
         
-        self.save_file_to_label.grid(row=0, column=0)
-        self.file_saving_path.grid(row=0, column=1)
-        self.save_to_btn.grid(row=0, column=2)
-        self.output_file_name_label.grid(row=1, column=0)
-        self.file_name.grid(row=1, column=1)
+        self.save_file_to_label.grid(row=0, column=0, padx=10, pady=10)
+        self.file_saving_path.grid(row=0, column=1, padx=10, pady=10)
+        self.save_to_btn.grid(row=0, column=2, padx=10, pady=10)
+        self.output_file_name_label.grid(row=1, column=0, padx=10, pady=10)
+        self.file_name.grid(row=1, column=1, padx=10, pady=10)
 
     def create_footer_frame(self):  
 
         self.footer_frame = Frame(self.base_frame)
-        self.footer_frame.grid(row=3, column=0, padx=10, pady=10)
+        self.footer_frame.grid(row=4, column=0, padx=10, pady=10)
 
         self.run_btn = Button(self.footer_frame, width = 10, height = 2, text= "Run", command= self.generate_table)
         self.progress_bar = ttk.Progressbar(self.footer_frame, orient='horizontal' ,mode='indeterminate')
 
-        self.run_btn.grid(row=1, column=1)
+        self.run_btn.grid(row=0, column=1)
     
     def gene_list_type(self):
         if self.input_type_rb_val.get() == 'text':
@@ -148,8 +158,8 @@ class App(Tk):
     def path_file(self):
         output_path = filedialog.askdirectory()
         self.output_file_path.set(output_path)
-        self.output_location.delete(0,END)
-        self.output_location.insert(0,self.output_file_path)
+        self.file_saving_path.delete(0,END)
+        self.file_saving_path.insert(0,self.output_file_path)
 
     def get_genes_from_file(self, input_file_path):
         gene_list_df = pd.read_excel(input_file_path)
@@ -158,11 +168,11 @@ class App(Tk):
  
     def clear_UI(self):
         self.run_btn.config(state="normal")
-        self.radio_btn_val.set("file")
+        self.input_type_rb_val.set("file")
         self.input_file_path.set("")
-        self.open_button.config(state="normal")
-        self.text_area.delete('1.0', END)
-        self.text_area.config(state="disabled")
+        self.open_filedialog_btn.config(state="normal")
+        self.text_input.delete('1.0', END)
+        self.text_input.config(state="disabled")
         self.link_var.set(0)
         self.overlap_var.set(0)
         self.output_file_path.set("")
@@ -173,20 +183,20 @@ class App(Tk):
             self.after(100, lambda: self.monitor(thread))
         else:
             self.progress_bar.stop()
-            self.progress_bar.place_forget()
+            self.progress_bar.grid_forget()
             messagebox.showinfo(title="Progress", message="Done! File has been saved!")
             self.clear_UI()
 
     def generate_table(self):  
         
-        self.progress_bar.place(x=390, y=670)
+        self.progress_bar.grid(row=1, column=1, padx=10, pady=10)
         self.progress_bar.start()
         
-        if self.radio_btn_val.get() == 'text':
-            text_input = self.text_area.get('1.0',END).upper()
+        if self.input_type_rb_val.get() == 'text':
+            text_input = self.text_input.get('1.0',END).upper()
             text_input_temp = ''.join(text_input.splitlines())
             gene_list = text_input_temp.split(',')   
-        elif self.radio_btn_val.get() == 'file':
+        elif self.input_type_rb_val.get() == 'file':
             gene_list = self.get_genes_from_file(self.input_file_path.get())
         
         output_file = os.path.join(self.output_file_path.get(), f"{self.output_file_name.get()}.csv")
