@@ -1,10 +1,12 @@
+import customtkinter
 from tkinter import *
-from tkinter import ttk,scrolledtext,filedialog, messagebox
+from tkinter import filedialog, messagebox
 import pandas as pd
 import openpyxl 
 import finding_genes_module as fg
 import os
 from threading import Thread
+
 
 
 class GenerateTable(Thread):
@@ -42,10 +44,13 @@ class GenerateTable(Thread):
 
         Final_data_table.to_csv(self.output_file_path, index=False)
 
-class App(Tk):
+class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
+        customtkinter.set_appearance_mode("Dark")
+        customtkinter.set_default_color_theme("dark-blue")
+          
         self.title("Linkage & Overlap tool")
         self.width = 800
         self.height = 650
@@ -57,7 +62,7 @@ class App(Tk):
         self.y_offset = (self.screen_heigth/2) - (self.height/2)
         self.geometry("%dx%d+%d+%d" % (self.width, self.height, self.x_offset, self.y_offset))
         
-        self.base_frame = Frame(self)
+        self.base_frame = customtkinter.CTkFrame(self)
         self.base_frame.pack()
 
         self.create_head_frame()
@@ -68,61 +73,65 @@ class App(Tk):
 
     def create_head_frame(self):
 
-        self.head_frame = Frame(self.base_frame)
+        self.head_frame = customtkinter.CTkFrame(master=self.base_frame)
         self.head_frame.grid(row=0, column=0, padx=10, pady=10)
 
-        self.title = Label(self.head_frame, text="Linkage & Overlap Tool")
+        self.title = customtkinter.CTkLabel(self.head_frame, text="Linkage & Overlap Tool")
         self.title.grid(row=0, column=0)
+
+        self.theme_switch_var = customtkinter.StringVar(value="on")
+        self.theme_switch = customtkinter.CTkSwitch(self.head_frame, text="Dark Mode", command=self.theme_switch_toogle, variable=self.theme_switch_var, onvalue="on", offvalue="off")
+        self.theme_switch.grid(row=0, column=3, padx=50)
 
     def create_input_frame(self):
 
-        self.input_type_frame = LabelFrame(self.base_frame, text="Input")
+        self.input_type_frame = customtkinter.CTkFrame(master=self.base_frame)
         self.input_type_frame.grid(row=1, column=0, padx=10, pady=10)
 
-        self.input_type_rb_val = StringVar(value = "file")
-        self.input_file_path = StringVar()
+        self.input_type_rb_val = customtkinter.StringVar(value = "file")
+        self.input_file_path = customtkinter.StringVar()
 
-        self.input_from_file_rb = Radiobutton(self.input_type_frame, text="Load Excel Table", variable=self.input_type_rb_val, value="file", command= self.gene_list_type)
-        self.input_from_text_rb = Radiobutton(self.input_type_frame, text="Text", variable=self.input_type_rb_val, value="text", command= self.gene_list_type)
+        self.input_from_file_rb = customtkinter.CTkRadioButton(self.input_type_frame, text="Load Excel Table", variable=self.input_type_rb_val, value="file", command= self.gene_list_type)
+        self.input_from_text_rb = customtkinter.CTkRadioButton(self.input_type_frame, text="Text", variable=self.input_type_rb_val, value="text", command= self.gene_list_type)
 
         self.input_from_file_rb.grid(row=0, column=0, sticky="w", padx=5, pady=5)
         self.input_from_text_rb.grid(row=1, column=0, sticky="w", padx=5, pady=5)
 
-        self.input_file_location = Entry(self.input_type_frame, state="disabled", width = 60, textvariable=self.input_file_path)
-        self.open_filedialog_btn = ttk.Button(self.input_type_frame,text='Choose a File', command=self.select_file)
-        self.text_input = scrolledtext.ScrolledText(self.input_type_frame, state="disabled", wrap = WORD, width = 36, height = 10, font = ("Times New Roman",15))
+        self.input_file_location = customtkinter.CTkEntry(self.input_type_frame, state="disabled", width = 400, textvariable=self.input_file_path)
+        self.open_filedialog_btn = customtkinter.CTkButton(self.input_type_frame,text='Choose a File', command=self.select_file)
+        self.text_input = customtkinter.CTkTextbox(self.input_type_frame, state="disabled" ,wrap = WORD, width = 400, height = 200, font = ("Times New Roman",15))
 
         self.input_file_location.grid(row=0, column=1, padx=5, pady=5)
         self.open_filedialog_btn.grid(row=0, column=2, sticky="e", padx=(5,10), pady=5)
-        self.text_input.grid(row=1, column=1, padx=(20,5), pady=10)
+        self.text_input.grid(row=1, column=1, padx=5, pady=5)
 
     def create_search_method_frame(self):
 
-        self.search_method_frame = LabelFrame(self.base_frame, text="Search Method")
+        self.search_method_frame = customtkinter.CTkFrame(master=self.base_frame)
         self.search_method_frame.grid(row=2, column=0, padx=10, pady=10)
 
-        self.link_var = IntVar()
-        self.overlap_var = IntVar()
+        self.link_var = customtkinter.IntVar()
+        self.overlap_var = customtkinter.IntVar()
 
-        self.linkage_checkbox = Checkbutton(self.search_method_frame, text = "Linkage", variable = self.link_var, onvalue = 1, offvalue = 0)
-        self.overlapping_checkbox = Checkbutton(self.search_method_frame, text = "Overlapping genes", variable = self.overlap_var, onvalue = 1, offvalue = 0)
+        self.linkage_checkbox = customtkinter.CTkCheckBox(self.search_method_frame, text = "Linkage", variable = self.link_var, onvalue = 1, offvalue = 0)
+        self.overlapping_checkbox = customtkinter.CTkCheckBox(self.search_method_frame, text = "Overlapping genes", variable = self.overlap_var, onvalue = 1, offvalue = 0)
         
         self.linkage_checkbox.grid(row=0, column=0)
         self.overlapping_checkbox.grid(row=0, column=1)
 
     def create_output_frame(self):    
 
-        self.file_saving_frame = LabelFrame(self.base_frame, text="Output")
+        self.file_saving_frame = customtkinter.CTkFrame(master=self.base_frame)
         self.file_saving_frame.grid(row=3, column=0, padx=10, pady=10)
 
-        self.output_file_name = StringVar()
-        self.output_file_path = StringVar()
+        self.output_file_name = customtkinter.StringVar()
+        self.output_file_path = customtkinter.StringVar()
 
-        self.save_file_to_label = Label(self.file_saving_frame, text="Save to", font = ("Calibri",12))
-        self.file_saving_path = Entry(self.file_saving_frame, width = 60, state="disabled", textvariable=self.output_file_path)
-        self.save_to_btn= Button(self.file_saving_frame, text= "Save to", command= self.path_file)
-        self.output_file_name_label = Label(self.file_saving_frame, text="Output file name", font = ("Calibri",12))
-        self.file_name = Entry(self.file_saving_frame, width = 60, state="normal", textvariable=self.output_file_name)
+        self.save_file_to_label = customtkinter.CTkLabel(self.file_saving_frame, text="Save to", font = ("Calibri",12))
+        self.file_saving_path = customtkinter.CTkEntry(self.file_saving_frame, width = 400, state="disabled", textvariable=self.output_file_path)
+        self.save_to_btn= customtkinter.CTkButton(self.file_saving_frame, text= "Save to", command= self.path_file)
+        self.output_file_name_label = customtkinter.CTkLabel(self.file_saving_frame, text="Output file name", font = ("Calibri",12))
+        self.file_name = customtkinter.CTkEntry(self.file_saving_frame, width = 400, state="normal", textvariable=self.output_file_name)
         
         self.save_file_to_label.grid(row=0, column=0, padx=10, pady=10)
         self.file_saving_path.grid(row=0, column=1, padx=10, pady=10)
@@ -132,21 +141,21 @@ class App(Tk):
 
     def create_footer_frame(self):  
 
-        self.footer_frame = Frame(self.base_frame)
+        self.footer_frame = customtkinter.CTkFrame(master=self.base_frame)
         self.footer_frame.grid(row=4, column=0, padx=10, pady=10)
 
-        self.run_btn = Button(self.footer_frame, width = 10, height = 2, text= "Run", command= self.generate_table)
-        self.progress_bar = ttk.Progressbar(self.footer_frame, orient='horizontal' ,mode='indeterminate')
+        self.run_btn = customtkinter.CTkButton(self.footer_frame, text= "Run", command= self.generate_table)
+        self.progress_bar = customtkinter.CTkProgressBar(self.footer_frame, orientation='horizontal' ,mode='indeterminate')
 
         self.run_btn.grid(row=0, column=1)
     
     def gene_list_type(self):
         if self.input_type_rb_val.get() == 'text':
-            self.open_filedialog_btn.config(state= "disabled")
-            self.text_input.config(state= "normal")
+            self.open_filedialog_btn.configure(state= "disabled")
+            self.text_input.configure(state= "normal")
         elif self.input_type_rb_val.get() == 'file':
-            self.text_input.config(state= "disabled")
-            self.open_filedialog_btn.config(state= "normal")
+            self.text_input.configure(state= "disabled")
+            self.open_filedialog_btn.configure(state= "normal")
 
     def select_file(self):
         filetypes = (('xlsx files','*.xlsx'),('csv files','*.csv'),('xls files', '*.xls'))
@@ -167,12 +176,12 @@ class App(Tk):
         return gene_list
  
     def clear_UI(self):
-        self.run_btn.config(state="normal")
+        self.run_btn.configure(state="normal")
         self.input_type_rb_val.set("file")
         self.input_file_path.set("")
-        self.open_filedialog_btn.config(state="normal")
+        self.open_filedialog_btn.configure(state="normal")
         self.text_input.delete('1.0', END)
-        self.text_input.config(state="disabled")
+        self.text_input.configure(state="disabled")
         self.link_var.set(0)
         self.overlap_var.set(0)
         self.output_file_path.set("")
@@ -188,6 +197,7 @@ class App(Tk):
             self.clear_UI()
 
     def generate_table(self):  
+
         
         self.progress_bar.grid(row=1, column=1, padx=10, pady=10)
         self.progress_bar.start()
@@ -204,6 +214,14 @@ class App(Tk):
         generate_table_thread.start()
         self.monitor(generate_table_thread)
 
+    def theme_switch_toogle(self):
+        if self.theme_switch_var.get() == "on":
+            customtkinter.set_appearance_mode("dark")
+            customtkinter.set_default_color_theme("dark-blue")
+        elif self.theme_switch_var.get() == "off":
+            customtkinter.set_appearance_mode("light")
+            customtkinter.set_default_color_theme("blue")
+
 if __name__=="__main__":
-    app=App()
+    app = App()
     app.mainloop()
